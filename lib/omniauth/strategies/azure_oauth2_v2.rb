@@ -32,7 +32,7 @@ module OmniAuth
         options.authorize_params = provider.authorize_params if provider.respond_to?(:authorize_params)
         options.authorize_params.domain_hint = provider.domain_hint if provider.respond_to?(:domain_hint) && provider.domain_hint
         options.authorize_params.prompt = request.params['prompt'] if defined? request && request.params['prompt']
-        options.authorize_params.scope = (provider.scope if provider.respond_to?(:scope) && provider.scope) || DEFAULT_SCOPE 
+        options.authorize_params.scope = (provider.scope if provider.respond_to?(:scope) && provider.scope) || DEFAULT_SCOPE
 
         options.client_options.authorize_url = "#{options.base_azure_url}/#{options.tenant_id}/oauth2/v2.0/authorize"
         options.client_options.token_url = "#{options.base_azure_url}/#{options.tenant_id}/oauth2/v2.0/token"
@@ -43,6 +43,12 @@ module OmniAuth
       uid {
         raw_info['id']
       }
+
+      extra do
+        {
+          groups: @groups
+        }
+      end
 
       info do
         {
@@ -59,6 +65,7 @@ module OmniAuth
       end
 
       def raw_info
+        @groups ||= JWT.decode(access_token["id_token"], nil, false).first["groups"]
         @raw_info ||= access_token.get(USER_INFO_URL).parsed
       end
 
